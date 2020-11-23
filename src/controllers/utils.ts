@@ -1,10 +1,12 @@
 import db from '../database/connection'
 
 class Utils {
-  public async isLoggedIn (id: string, email: string, auth: string) : Promise<boolean> {
-    const [AuthKey, isLoggedIn] = await db('users')
+  public async isLoggedIn (email: string, auth: string) : Promise<boolean> {
+    const data = await db('users')
       .select('auth', 'is_logged_in')
-      .where({ id, email })
+      .where({ email })
+
+    const [{ auth: AuthKey, is_logged_in: isLoggedIn }] = data
 
     return AuthKey !== '' && AuthKey === auth && isLoggedIn
   }
