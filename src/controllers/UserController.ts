@@ -1,0 +1,139 @@
+import { Request, Response } from 'express'
+import crypto from 'crypto'
+import Utils from './utils'
+import db from '../database/connection'
+
+class UserController {
+  public async profile (req: Request, res: Response) {
+    const { id } = req.params
+    const { email, auth } = req.body
+
+    if (Utils.isLoggedIn(id, email, auth)) {
+      const [user] = await db('users')
+        .select(['name', 'email', 'phone'])
+        .where({ id, auth })
+
+      return res.json(user)
+    } else {
+      return res.json({
+        error: 'Unauthorized access!'
+      }).sendStatus(401)
+    }
+  }
+
+  public async index (req: Request, res: Response) {
+    const { page = 1 } = req.query
+
+    const users = await db('users')
+      .select(['name', 'email', 'phone'])
+      .orderBy('id')
+      .limit(5)
+      .offset((Number(page) - 1) * 5)
+
+    return res.json(users)
+  }
+
+  public async create (req: Request, res: Response) {
+    const { name, phone, email, password } = req.body
+
+    const RamdomStr = crypto.randomBytes(16).toString('hex')
+
+    await db('users').insert({
+      name,
+      phone,
+      email,
+      password,
+      is_logged_in: true,
+      auth: RamdomStr,
+      is_admin: false
+    })
+
+    const [{ id }] = await db('users').select('id').where({ email, auth: RamdomStr })
+
+    return res.json({
+      id,
+      name,
+      auth: RamdomStr
+    })
+  }
+
+  public async update (req: Request, res: Response) {
+    const { id, name, phone, email, auth } = req.body
+
+    if (Utils.isLoggedIn(id, email, auth)) {
+      await db('users').update({
+        name,
+        phone,
+        email
+      }).where({
+        id,
+        auth
+      })
+
+      return res.sendStatus(200)
+    } else {
+      return res.json({
+        error: 'Unauthorized access!'
+      }).sendStatus(401)
+    }
+  }
+
+  public async delete (req: Request, res: Response) {
+    const { id } = req.params
+    const { email, auth } = req.body
+
+    if (Utils.isLoggedIn(id, email, auth)) {
+      await db('users').where({
+        id,
+        auth
+      }).delete()
+
+      return res.sendStatus(200)
+    } else {
+      return res.json({
+        error: 'Unauthorized access!'
+      }).sendStatus(401)
+    }
+  }
+
+  public async login (req: Request, res: Response) {
+    const { email, password } = req.body
+
+    const RamdomStr = crypto.randomBytes(16).toString('hex')
+
+    await db('users').where({
+      email,
+      password
+    }).update('auth', '=', RamdomStr)
+
+    const { id, name, auth } = await db('users')
+      .select(['id', 'name', 'auth'])
+      .where({
+        email,
+        password,
+        auth: RamdomStr
+      })
+
+    return res.json({
+      id,
+      name,
+      auth
+    })
+  }
+
+  public async logout (req: Request, res: Response) {
+    const { id, email, auth } = req.body
+
+    if (Utils.isLoggedIn(id, email, auth)) {
+      await db('users').where({ id, auth }).update({ auth: '', is_logged_in: false })
+
+      return res.sendStatus(200)
+    } else {
+      return res.json({
+        error: 'Unauthorized access'
+      }).sendStatus(401)
+    }
+  }
+}
+
+export default new UserController()
