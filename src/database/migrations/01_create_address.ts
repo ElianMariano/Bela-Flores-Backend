@@ -1,6 +1,6 @@
 import Knex from 'knex'
 
-export async function up (knex: Knex) {
+export async function up (knex: Knex) : Promise<void> {
   return knex.schema.createTable('address', table => {
     table.increments('id').primary()
     table.string('nickname').notNullable()
@@ -9,11 +9,11 @@ export async function up (knex: Knex) {
     table.string('neighborhood').notNullable()
     table.string('street').notNullable()
     table.integer('number').notNullable()
-    table.integer('user_id').references('id').inTable('users')
     table.string('CEP').notNullable()
+    table.integer('user_id').references('id').inTable('users')
   })
 }
 
-export async function down (knex: Knex) {
+export async function down (knex: Knex) : Promise<void> {
   return knex.schema.dropTable('address')
 }

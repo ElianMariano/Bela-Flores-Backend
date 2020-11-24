@@ -22,6 +22,7 @@ class UserController {
           error: 'Unauthorized access!'
         })
       })
+      .catch(Error)
   }
 
   public async index (req: Request, res: Response) {
@@ -82,6 +83,7 @@ class UserController {
           error: 'Unauthorized access!'
         })
       })
+      .catch(Error)
   }
 
   public async delete (req: Request, res: Response) {
@@ -141,6 +143,7 @@ class UserController {
           error: 'Unauthorized access'
         })
       })
+      .catch(Error)
   }
 }
 

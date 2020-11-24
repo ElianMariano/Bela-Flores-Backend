@@ -1,5 +1,7 @@
 import express from 'express'
 import UserController from './controllers/UserController'
+import AddressController from './controllers/AddressController'
+import CategoryController from './controllers/CategoryController'
 
 class Routes {
     public routes: express.Router = express.Router();
@@ -14,6 +16,19 @@ class Routes {
       this.routes.delete('/user/:id', UserController.delete)
       this.routes.post('/login', UserController.login)
       this.routes.post('/logout', UserController.logout)
+
+      // Address routes
+      this.routes.get('/address', AddressController.index)
+      this.routes.post('/address', AddressController.create)
+      this.routes.put('/address', AddressController.update)
+      this.routes.delete('/address', AddressController.delete)
+
+      // Category
+      this.routes.get('/category/:category', CategoryController.profile)
+      this.routes.get('/category', CategoryController.index)
+      this.routes.post('/category', CategoryController.create)
+      this.routes.put('/category', CategoryController.update)
+      this.routes.delete('/category', CategoryController.delete)
     }
 }
 
