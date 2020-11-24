@@ -8,17 +8,21 @@ class UserController {
     const { id } = req.params
     const { email, auth } = req.body
 
-    if (Utils.isLoggedIn(id, email, auth)) {
-      const [user] = await db('users')
-        .select(['name', 'email', 'phone'])
-        .where({ id, auth })
+    await Utils.isLoggedIn(email, auth)
+      .then(async result => {
+        if (result) {
+          const [user] = await db('users')
+            .select(['name', 'email', 'phone'])
+            .where({ id, auth })
 
-      return res.json(user)
-    } else {
-      return res.json({
-        error: 'Unauthorized access!'
-      }).sendStatus(401)
-    }
+          return res.json(user)
+        }
+
+        return res.status(401).json({
+          error: 'Unauthorized access!'
+        })
+      })
+      .catch(Error)
   }
 
   public async index (req: Request, res: Response) {
@@ -60,40 +64,47 @@ class UserController {
   public async update (req: Request, res: Response) {
     const { id, name, phone, email, auth } = req.body
 
-    if (Utils.isLoggedIn(id, email, auth)) {
-      await db('users').update({
-        name,
-        phone,
-        email
-      }).where({
-        id,
-        auth
-      })
+    await Utils.isLoggedIn(email, auth)
+      .then(async result => {
+        if (result) {
+          await db('users').update({
+            name,
+            phone,
+            email
+          }).where({
+            id,
+            auth
+          })
 
-      return res.sendStatus(200)
-    } else {
-      return res.json({
-        error: 'Unauthorized access!'
-      }).sendStatus(401)
-    }
+          return res.sendStatus(200)
+        }
+
+        return res.status(401).json({
+          error: 'Unauthorized access!'
+        })
+      })
+      .catch(Error)
   }
 
   public async delete (req: Request, res: Response) {
     const { id } = req.params
     const { email, auth } = req.body
 
-    if (Utils.isLoggedIn(id, email, auth)) {
-      await db('users').where({
-        id,
-        auth
-      }).delete()
+    await Utils.isLoggedIn(email, auth)
+      .then(async result => {
+        if (result) {
+          await db('users').where({
+            id,
+            auth
+          }).delete()
 
-      return res.sendStatus(200)
-    } else {
-      return res.json({
-        error: 'Unauthorized access!'
-      }).sendStatus(401)
-    }
+          return res.sendStatus(200)
+        }
+
+        return res.status(401).json({
+          error: 'Unauthorized access!'
+        })
+      })
   }
 
   public async login (req: Request, res: Response) {
@@ -104,35 +115,35 @@ class UserController {
     await db('users').where({
       email,
       password
-    }).update('auth', '=', RamdomStr)
+    }).update({ auth: RamdomStr, is_logged_in: true })
 
-    const { id, name, auth } = await db('users')
-      .select(['id', 'name', 'auth'])
+    const [data] = await db('users')
+      .select('id', 'name', 'auth')
       .where({
         email,
         password,
         auth: RamdomStr
       })
 
-    return res.json({
-      id,
-      name,
-      auth
-    })
+    return res.json(data)
   }
 
   public async logout (req: Request, res: Response) {
     const { id, email, auth } = req.body
 
-    if (Utils.isLoggedIn(id, email, auth)) {
-      await db('users').where({ id, auth }).update({ auth: '', is_logged_in: false })
+    await Utils.isLoggedIn(email, auth)
+      .then(async result => {
+        if (result) {
+          await db('users').where({ id, auth }).update({ auth: '', is_logged_in: false })
 
-      return res.sendStatus(200)
-    } else {
-      return res.json({
-        error: 'Unauthorized access'
-      }).sendStatus(401)
-    }
+          return res.sendStatus(200)
+        }
+
+        return res.status(401).json({
+          error: 'Unauthorized access'
+        })
+      })
+      .catch(Error)
   }
 }
 
