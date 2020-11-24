@@ -4,12 +4,10 @@ import db from '../database/connection'
 
 class AddressController {
   public async index (req: Request, res: Response) {
-    const {
-      email,
-      auth
-    } = req.body
+    const { email } = req.body
+    const { auth } = req.headers
 
-    await Utils.isLoggedIn(email, auth)
+    await Utils.isLoggedIn(email, String(auth))
       .then(async result => {
         if (result) {
           const address = await db('address')
@@ -30,7 +28,6 @@ class AddressController {
   public async create (req: Request, res: Response) {
     const {
       email,
-      auth,
       nickname,
       UF,
       city,
@@ -39,8 +36,9 @@ class AddressController {
       number,
       CEP
     } = req.body
+    const { auth } = req.headers
 
-    await Utils.isLoggedIn(email, auth)
+    await Utils.isLoggedIn(email, String(auth))
       .then(async result => {
         if (result) {
           const [{ id }] = await db('users')
@@ -83,7 +81,6 @@ class AddressController {
   public async update (req: Request, res: Response) {
     const {
       email,
-      auth,
       nickname,
       UF,
       city,
@@ -93,8 +90,9 @@ class AddressController {
       CEP,
       address_id: AddressId
     } = req.body
+    const { auth } = req.headers
 
-    await Utils.isLoggedIn(email, auth)
+    await Utils.isLoggedIn(email, String(auth))
       .then(async result => {
         if (result) {
           const [{ id }] = await db('users')
@@ -131,11 +129,11 @@ class AddressController {
   public async delete (req: Request, res: Response) {
     const {
       email,
-      auth,
       address_id: AddressId
     } = req.body
+    const { auth } = req.headers
 
-    await Utils.isLoggedIn(email, auth)
+    await Utils.isLoggedIn(email, String(auth))
       .then(async result => {
         if (result) {
           await db('address')
