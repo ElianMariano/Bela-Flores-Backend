@@ -38,6 +38,22 @@ class AddressController {
     } = req.body
     const { auth } = req.headers
 
+    let address
+    try {
+      [{ nickname: address }] = await db('address')
+        .select('nickname')
+        .where({ nickname })
+    } catch (err) {
+      console.log(err)
+    }
+
+    if (address === nickname || address !== undefined) {
+      return res.status(406)
+        .json({
+          error: 'Address nickname already exists!'
+        })
+    }
+
     await Utils.isLoggedIn(email, String(auth))
       .then(async result => {
         if (result) {
@@ -60,8 +76,8 @@ class AddressController {
               user_id: id
             })
 
-          const [{ id: AddressId }] = await db('address')
-            .select('id')
+          const [{ nickname: AddressId }] = await db('address')
+            .select('nickname')
             .where({ nickname })
 
           return res.status(200)
@@ -81,16 +97,48 @@ class AddressController {
   public async update (req: Request, res: Response) {
     const {
       email,
-      nickname,
+      new_nickname: nickname,
       UF,
       city,
       neighborhood,
       street,
       number,
       CEP,
-      address_id: AddressId
+      nickname: AddressId
     } = req.body
     const { auth } = req.headers
+
+    let address
+
+    try {
+      [{ nickname: address }] = await db('address')
+        .select('nickname')
+        .where({ nickname: AddressId })
+    } catch (err) {
+      console.log(err)
+    }
+
+    if (address === undefined) {
+      return res.status(404)
+        .json({
+          error: 'Address does not exist!'
+        })
+    }
+
+    try {
+      [{ nickname: address }] = await db('address')
+        .select('nickname')
+        .where({ nickname: nickname })
+    } catch (err) {
+      console.log(err)
+    }
+
+    if (address === nickname) {
+      return res.status(406)
+        .json({
+          error: 'New Address nickname already exists!'
+        })
+    }
 
     await Utils.isLoggedIn(email, String(auth))
       .then(async result => {
@@ -113,7 +161,7 @@ class AddressController {
               CEP,
               user_id: id
             })
-            .where({ id: AddressId })
+            .where({ nickname: AddressId })
 
           return res.sendStatus(200)
         }
@@ -129,15 +177,31 @@ class AddressController {
   public async delete (req: Request, res: Response) {
     const {
       email,
-      address_id: AddressId
+      nickname
     } = req.body
     const { auth } = req.headers
+
+    let address
+    try {
+      [{ nickname: address }] = await db('address')
+        .select('nickname')
+        .where({ nickname })
+    } catch (err) {
+      console.log(err)
+    }
+
+    if (address === undefined) {
+      return res.status(404)
+        .json({
+          error: 'Address does not exists!'
+        })
+    }
 
     await Utils.isLoggedIn(email, String(auth))
       .then(async result => {
         if (result) {
           await db('address')
-            .where({ id: AddressId })
+            .where({ nickname })
             .delete()
 
           return res.sendStatus(200)
