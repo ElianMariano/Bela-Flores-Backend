@@ -123,8 +123,8 @@ class UserController {
       password
     }).update({ auth: RamdomStr, is_logged_in: true })
 
-    const [{ id, name, auth }] = await db('users')
-      .select('id', 'name', 'auth')
+    const [{ id, name }] = await db('users')
+      .select('id', 'name')
       .where({
         email,
         password,
@@ -132,7 +132,7 @@ class UserController {
       })
 
     return res
-      .header('auth', auth)
+      .header('auth', RamdomStr)
       .json({
         id,
         name

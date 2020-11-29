@@ -85,15 +85,16 @@ class CategoryController {
       category = await db('category')
         .select('category')
         .where({ category: CategoryId })
+        .then(result => {
+          if (result.length === 0) {
+            return res.status(404)
+              .json({
+                error: 'Category does not exist!'
+              })
+          }
+        })
     } catch (err) {
       console.log(err)
-    }
-
-    if (category.length === 0) {
-      return res.status(404)
-        .json({
-          error: 'Category does not exist!'
-        })
     }
 
     let secondCategory
@@ -148,15 +149,16 @@ class CategoryController {
       category = await db('category')
         .select('category')
         .where({ category: CategoryId })
+        .then(result => {
+          if (result.length === 0) {
+            return res.status(404)
+              .json({
+                error: 'Category does not exist!'
+              })
+          }
+        })
     } catch (err) {
       console.log(err)
-    }
-
-    if (category.length === 0) {
-      return res.status(404)
-        .json({
-          error: 'Category does not exist!'
-        })
     }
 
     await Utils.isLoggedIn(email, String(auth))
