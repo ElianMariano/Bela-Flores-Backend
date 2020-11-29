@@ -6,9 +6,10 @@ import db from '../database/connection'
 class UserController {
   public async profile (req: Request, res: Response) {
     const { id } = req.params
-    const { email, auth } = req.body
+    const { email } = req.body
+    const { auth } = req.headers
 
-    await Utils.isLoggedIn(email, auth)
+    await Utils.isLoggedIn(email, String(auth))
       .then(async result => {
         if (result) {
           const [user] = await db('users')
@@ -54,17 +55,19 @@ class UserController {
 
     const [{ id }] = await db('users').select('id').where({ email, auth: RamdomStr })
 
-    return res.json({
-      id,
-      name,
-      auth: RamdomStr
-    })
+    return res
+      .header('auth', RamdomStr)
+      .json({
+        id,
+        name
+      })
   }
 
   public async update (req: Request, res: Response) {
-    const { id, name, phone, email, auth } = req.body
+    const { id, name, phone, email } = req.body
+    const { auth } = req.headers
 
-    await Utils.isLoggedIn(email, auth)
+    await Utils.isLoggedIn(email, String(auth))
       .then(async result => {
         if (result) {
           await db('users').update({
@@ -79,6 +82,8 @@ class UserController {
           return res.sendStatus(200)
         }
 
+        console.log('Chegou aqui')
+
         return res.status(401).json({
           error: 'Unauthorized access!'
         })
@@ -88,9 +93,10 @@ class UserController {
 
   public async delete (req: Request, res: Response) {
     const { id } = req.params
-    const { email, auth } = req.body
+    const { email } = req.body
+    const { auth } = req.headers
 
-    await Utils.isLoggedIn(email, auth)
+    await Utils.isLoggedIn(email, String(auth))
       .then(async result => {
         if (result) {
           await db('users').where({
@@ -117,21 +123,27 @@ class UserController {
       password
     }).update({ auth: RamdomStr, is_logged_in: true })
 
-    const [data] = await db('users')
-      .select('id', 'name', 'auth')
+    const [{ id, name }] = await db('users')
+      .select('id', 'name')
       .where({
         email,
         password,
         auth: RamdomStr
       })
 
-    return res.json(data)
+    return res
+      .header('auth', RamdomStr)
+      .json({
+        id,
+        name
+      })
   }
 
   public async logout (req: Request, res: Response) {
-    const { id, email, auth } = req.body
+    const { id, email } = req.body
+    const { auth } = req.headers
 
-    await Utils.isLoggedIn(email, auth)
+    await Utils.isLoggedIn(email, String(auth))
       .then(async result => {
         if (result) {
           await db('users').where({ id, auth }).update({ auth: '', is_logged_in: false })

@@ -5,7 +5,7 @@ import Utils from './utils'
 class CategoryController {
   public async profile (req: Request, res: Response) {
     const { category } = req.params
-    const { with_products: withProducts = false } = req.body
+    const { with_products: withProducts = false } = req.params
 
     const [data] = await db('category')
       .select('*')
@@ -22,7 +22,7 @@ class CategoryController {
   }
 
   public async index (req: Request, res: Response) {
-    const { width_products: withProducts = false } = req.body
+    const { width_products: withProducts = false } = req.params
 
     const data = await db('category')
       .select('*')
@@ -31,7 +31,8 @@ class CategoryController {
   }
 
   public async create (req: Request, res: Response) {
-    const { email, auth, category, description } = req.body
+    const { email, category, description } = req.body
+    const { auth } = req.headers
 
     const data = await db('category')
       .select('category')
@@ -44,7 +45,7 @@ class CategoryController {
         })
     }
 
-    await Utils.isLoggedIn(email, auth)
+    await Utils.isLoggedIn(email, String(auth))
       .then(async loggedIn => {
         if (loggedIn) {
           await Utils.isAdmin(email)
@@ -73,26 +74,37 @@ class CategoryController {
   public async update (req: Request, res: Response) {
     const {
       email,
-      auth,
       category: CategoryId,
       new_category: newCategory,
       description
     } = req.body
+    const { auth } = req.headers
 
-    const category = await db('category')
-      .select('category')
-      .where({ category: CategoryId })
-
-    if (category.length === 0) {
-      return res.status(404)
-        .json({
-          error: 'Category does not exist!'
+    let category
+    try {
+      category = await db('category')
+        .select('category')
+        .where({ category: CategoryId })
+        .then(result => {
+          if (result.length === 0) {
+            return res.status(404)
+              .json({
+                error: 'Category does not exist!'
+              })
+          }
         })
+    } catch (err) {
+      console.log(err)
     }
 
-    const [{ category: secondCategory }] = await db('category')
-      .select('category')
-      .where({ category: newCategory })
+    let secondCategory
+    try {
+      [{ category: secondCategory }] = await db('category')
+        .select('category')
+        .where({ category: newCategory })
+    } catch (err) {
+      console.log(err)
+    }
 
     if (secondCategory === newCategory) {
       return res.status(406)
@@ -101,7 +113,7 @@ class CategoryController {
         })
     }
 
-    await Utils.isLoggedIn(email, auth)
+    await Utils.isLoggedIn(email, String(auth))
       .then(async loggedIn => {
         if (loggedIn) {
           await Utils.isAdmin(email)
@@ -129,16 +141,34 @@ class CategoryController {
   }
 
   public async delete (req: Request, res: Response) {
-    const { email, auth, category } = req.body
+    const { email, category: CategoryId } = req.body
+    const { auth } = req.headers
 
-    await Utils.isLoggedIn(email, auth)
+    let category
+    try {
+      category = await db('category')
+        .select('category')
+        .where({ category: CategoryId })
+        .then(result => {
+          if (result.length === 0) {
+            return res.status(404)
+              .json({
+                error: 'Category does not exist!'
+              })
+          }
+        })
+    } catch (err) {
+      console.log(err)
+    }
+
+    await Utils.isLoggedIn(email, String(auth))
       .then(async loggedIn => {
         if (loggedIn) {
           await Utils.isAdmin(email)
             .then(async isAdmin => {
               if (isAdmin) {
                 await db('category')
-                  .where({ category })
+                  .where({ category: CategoryId })
                   .delete()
 
                 return res.sendStatus(200)
