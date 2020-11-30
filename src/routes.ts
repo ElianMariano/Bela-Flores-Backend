@@ -2,6 +2,7 @@ import express from 'express'
 import UserController from './controllers/UserController'
 import AddressController from './controllers/AddressController'
 import CategoryController from './controllers/CategoryController'
+import ProductsController from './controllers/ProductsController'
 
 class Routes {
     public routes: express.Router = express.Router();
@@ -29,6 +30,12 @@ class Routes {
       this.routes.post('/category', CategoryController.create)
       this.routes.put('/category', CategoryController.update)
       this.routes.delete('/category', CategoryController.delete)
+
+      // Products
+      this.routes.get('/product/:id', ProductsController.index)
+      this.routes.post('/product', ProductsController.create)
+      this.routes.put('/product', ProductsController.update)
+      this.routes.delete('/product', ProductsController.delete)
     }
 }
 
