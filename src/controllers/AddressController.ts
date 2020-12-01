@@ -2,6 +2,10 @@ import { Request, Response } from 'express'
 import Utils from './utils'
 import db from '../database/connection'
 
+interface AddressProps{
+  address: string
+}
+
 class AddressController {
   public async index (req: Request, res: Response) {
     const { email } = req.body
@@ -106,25 +110,25 @@ class AddressController {
       CEP,
       nickname: AddressId
     } = req.body
+
     const { auth } = req.headers
 
+    await db('address')
+      .select('nickname')
+      .where('nickname', AddressId)
+      .then(result => {
+        const [{ nickname: address }] = result
+
+        if (address === undefined) {
+          return res.status(404)
+            .json({
+              error: 'Address does not exist!'
+            })
+        }
+      })
+      .catch(Error)
+
     let address
-
-    try {
-      [{ nickname: address }] = await db('address')
-        .select('nickname')
-        .where({ nickname: AddressId })
-    } catch (err) {
-      console.log(err)
-    }
-
-    if (address === undefined) {
-      return res.status(404)
-        .json({
-          error: 'Address does not exist!'
-        })
-    }
-
     try {
       [{ nickname: address }] = await db('address')
         .select('nickname')

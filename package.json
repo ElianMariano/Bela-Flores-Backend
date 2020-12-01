@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon src/server.ts",
     "build": "sucrase ./src -d ./dist --transforms typescript,imports",
-    "test": "cross-env NODE_ENV=test jest "
+    "test": "cross-env NODE_ENV=test jest --runInBand "
   },
   "devDependencies": {
     "@types/cors": "^2.8.8",

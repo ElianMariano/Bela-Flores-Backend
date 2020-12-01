@@ -65,6 +65,7 @@ class ProductsController {
                   })
               }
             })
+            .catch(Error)
         }
 
         return res
@@ -127,6 +128,7 @@ class ProductsController {
                   })
               }
             })
+            .catch(Error)
         }
 
         return res

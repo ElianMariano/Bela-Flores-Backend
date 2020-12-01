@@ -82,8 +82,6 @@ class UserController {
           return res.sendStatus(200)
         }
 
-        console.log('Chegou aqui')
-
         return res.status(401).json({
           error: 'Unauthorized access!'
         })
@@ -123,13 +121,19 @@ class UserController {
       password
     }).update({ auth: RamdomStr, is_logged_in: true })
 
-    const [{ id, name }] = await db('users')
-      .select('id', 'name')
-      .where({
-        email,
-        password,
-        auth: RamdomStr
-      })
+    let id, name
+
+    try {
+      [{ id, name }] = await db('users')
+        .select('id', 'name')
+        .where({
+          email,
+          password,
+          auth: RamdomStr
+        })
+    } catch (err) {
+      console.log(err)
+    }
 
     return res
       .header('auth', RamdomStr)
