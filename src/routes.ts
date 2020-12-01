@@ -1,10 +1,15 @@
 import express from 'express'
+import multer from 'multer'
+import multerConfig from './multer'
 import UserController from './controllers/UserController'
 import AddressController from './controllers/AddressController'
 import CategoryController from './controllers/CategoryController'
+import ProductsController from './controllers/ProductsController'
+import SlideController from './controllers/SlideController'
 
 class Routes {
     public routes: express.Router = express.Router();
+    public upload = multer(multerConfig)
 
     public constructor () {
       // User routes
@@ -29,6 +34,18 @@ class Routes {
       this.routes.post('/category', CategoryController.create)
       this.routes.put('/category', CategoryController.update)
       this.routes.delete('/category', CategoryController.delete)
+
+      // Products
+      this.routes.get('/product/:id', ProductsController.index)
+      this.routes.post('/product', ProductsController.create)
+      this.routes.put('/product', ProductsController.update)
+      this.routes.delete('/product', ProductsController.delete)
+
+      // Images
+      this.routes.get('/slide', SlideController.index)
+      this.routes.post('/slide', this.upload.single('image'), SlideController.create)
+      this.routes.put('/slide', this.upload.single('image'), SlideController.update)
+      this.routes.delete('/slide', SlideController.delete)
     }
 }
 

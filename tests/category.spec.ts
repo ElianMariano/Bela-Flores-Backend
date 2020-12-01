@@ -5,8 +5,12 @@ import connection from '../src/database/connection'
 describe('category', () => {
   beforeAll(async () => {
     await connection.migrate.rollback()
-    await connection.migrate.latest()
-    await connection.seed.run()
+      .then(async () => {
+        await connection.migrate.latest()
+          .then(async () => {
+            await connection.seed.run()
+          })
+      })
   })
 
   afterAll(async () => {

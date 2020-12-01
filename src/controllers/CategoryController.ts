@@ -80,9 +80,8 @@ class CategoryController {
     } = req.body
     const { auth } = req.headers
 
-    let category
     try {
-      category = await db('category')
+      await db('category')
         .select('category')
         .where({ category: CategoryId })
         .then(result => {
