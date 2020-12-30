@@ -22,27 +22,24 @@ class ProductsController {
       price,
       description,
       splited_price: splitedPrice,
-      quantity,
+      division_quantity: divisionQuantity,
       category
     } = req.body
     const { auth } = req.headers
 
-    try {
-      await db('category')
-        .select('category')
-        .where({ category })
-        .then(result => {
-          if (result.length === 0) {
-            return res
-              .status(404)
-              .json({
-                error: 'Category does not exist!'
-              })
-          }
-        })
-    } catch (err) {
-      console.log(err)
-    }
+    await db('category')
+      .select('category')
+      .where({ category })
+      .then(result => {
+        if (result.length === 0) {
+          return res
+            .status(404)
+            .json({
+              error: 'Category does not exist!'
+            })
+        }
+      })
+      .catch(Error)
 
     await Utils.isAdmin(email)
       .then(async isAdmin => {
@@ -50,19 +47,19 @@ class ProductsController {
           await Utils.isLoggedIn(email, String(auth))
             .then(async isLoggedIn => {
               if (isLoggedIn) {
-                await db('products')
+                const result = await db('products')
                   .insert({
                     name,
                     price,
                     description,
                     splited_price: splitedPrice,
-                    quantity,
+                    division_quantity: divisionQuantity,
                     category_id: category
                   })
-                  .then(result => {
-                    const [id] = result
-                    return res.status(200).json({ id })
-                  })
+
+                const [id] = result
+
+                return res.status(200).json({ id })
               }
             })
             .catch(Error)
@@ -85,27 +82,24 @@ class ProductsController {
       price,
       description,
       splited_price: splitedPrice,
-      quantity,
+      division_quantity: divisionQuantity,
       category
     } = req.body
     const { auth } = req.headers
 
-    try {
-      await db('category')
-        .select('category')
-        .where({ category })
-        .then(result => {
-          if (result.length === 0) {
-            return res
-              .status(404)
-              .json({
-                error: 'Category does not exist!'
-              })
-          }
-        })
-    } catch (err) {
-      console.log(err)
-    }
+    await db('category')
+      .select('category')
+      .where({ category })
+      .then(result => {
+        if (result.length === 0) {
+          return res
+            .status(404)
+            .json({
+              error: 'Category does not exist!'
+            })
+        }
+      })
+      .catch(Error)
 
     await Utils.isAdmin(email)
       .then(async isAdmin => {
@@ -119,7 +113,7 @@ class ProductsController {
                     price,
                     description,
                     splited_price: splitedPrice,
-                    quantity,
+                    division_quantity: divisionQuantity,
                     category_id: category
                   })
                   .where('id', id)

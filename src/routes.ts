@@ -6,6 +6,7 @@ import AddressController from './controllers/AddressController'
 import CategoryController from './controllers/CategoryController'
 import ProductsController from './controllers/ProductsController'
 import SlideController from './controllers/SlideController'
+import OrderController from './controllers/OrderController'
 
 class Routes {
     public routes: express.Router = express.Router();
@@ -46,6 +47,12 @@ class Routes {
       this.routes.post('/slide', this.upload.single('image'), SlideController.create)
       this.routes.put('/slide', this.upload.single('image'), SlideController.update)
       this.routes.delete('/slide', SlideController.delete)
+
+      // Order
+      this.routes.get('/order', OrderController.index)
+      this.routes.post('/order', OrderController.create)
+      this.routes.put('/order', OrderController.update)
+      this.routes.delete('/order/:id', OrderController.delete)
     }
 }
 

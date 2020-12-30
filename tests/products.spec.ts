@@ -91,7 +91,7 @@ describe('products', () => {
         price: 19.5,
         description: 'Product Description',
         splited_price: 19.5,
-        quantity: 1,
+        division_quantity: 1,
         category
       })
       .set({ auth })
@@ -131,7 +131,7 @@ describe('products', () => {
         price: 19.5,
         description: 'Product Description',
         splited_price: 19.5,
-        quantity: 1,
+        division_quantity: 1,
         category
       })
       .set({ auth })
@@ -147,7 +147,7 @@ describe('products', () => {
         price: 20,
         description: 'Product Description updated',
         splited_price: 25,
-        quantity: 2,
+        division_quantity: 2,
         category: 'mycategory'
       })
       .set({ auth })
@@ -187,7 +187,7 @@ describe('products', () => {
         price: 19.5,
         description: 'Product Description',
         splited_price: 19.5,
-        quantity: 1,
+        division_quantity: 1,
         category
       })
       .set({ auth })
