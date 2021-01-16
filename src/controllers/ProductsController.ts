@@ -47,7 +47,7 @@ class ProductsController {
           await Utils.isLoggedIn(email, String(auth))
             .then(async isLoggedIn => {
               if (isLoggedIn) {
-                const result = await db('products')
+                const [id] = await db('products')
                   .insert({
                     name,
                     price,
@@ -56,8 +56,6 @@ class ProductsController {
                     division_quantity: divisionQuantity,
                     category_id: category
                   })
-
-                const [id] = result
 
                 return res.status(200).json({ id })
               }
