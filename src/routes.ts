@@ -39,8 +39,8 @@ class Routes {
 
       // Products
       this.routes.get('/product/:id', ProductsController.index)
-      this.routes.post('/product', ProductsController.create)
-      this.routes.put('/product', ProductsController.update)
+      this.routes.post('/product', this.upload.array('images'), ProductsController.create)
+      this.routes.put('/product', this.upload.array('images'), ProductsController.update)
       this.routes.delete('/product', ProductsController.delete)
 
       // Images

@@ -1,18 +1,36 @@
 import { Request, Response } from 'express'
+import path from 'path'
+import fs from 'fs'
 import Utils from './utils'
 import db from '../database/connection'
 
+interface ImageProps {
+  id: number;
+  // eslint-disable-next-line camelcase
+  product_id: number;
+  link: string;
+}
+// TODO Test the update route from this file
 class ProductsController {
   public async index (req: Request, res: Response) {
     const { id } = req.params
 
-    await db('products')
+    const [product] = await db('products')
       .select('*')
       .where('id', id)
-      .then(result => {
-        const [product] = result
-        return res.json(product)
-      })
+
+    const images : ImageProps[] = await db('product_images')
+      .select('*')
+      .where('product_id', id)
+
+    const imageSource = images.map(image => {
+      return image.link
+    })
+
+    return res.json({
+      ...product,
+      images: imageSource
+    })
   }
 
   public async create (req: Request, res: Response) {
@@ -47,7 +65,9 @@ class ProductsController {
           await Utils.isLoggedIn(email, String(auth))
             .then(async isLoggedIn => {
               if (isLoggedIn) {
-                const [id] = await db('products')
+                const trx = await db.transaction()
+
+                const [id] = await trx('products')
                   .insert({
                     name,
                     price,
@@ -56,6 +76,20 @@ class ProductsController {
                     division_quantity: divisionQuantity,
                     category_id: category
                   })
+
+                const images : string[] = []
+
+                for (let i = 0; i < req.files.length; i++) { images.push(String(req.files[i].filename)) }
+
+                for (const image of images) {
+                  await trx('product_images')
+                    .insert({
+                      product_id: id,
+                      link: `uploads/${image}`
+                    })
+                }
+
+                await trx.commit()
 
                 return res.status(200).json({ id })
               }
@@ -105,7 +139,38 @@ class ProductsController {
           await Utils.isLoggedIn(email, String(auth))
             .then(async isLoggedIn => {
               if (isLoggedIn) {
-                await db('products')
+                const trx = await db.transaction()
+
+                const productImages : ImageProps[] = await trx('product_images')
+                  .select('*')
+                  .where({ product_id: id })
+
+                await trx('product_images')
+                  .where({ product_id: id })
+                  .delete()
+                  .then(() => {
+                    try {
+                      productImages.forEach(product => {
+                        fs.unlinkSync(path.resolve(__dirname, '..', '..', String(product.link)))
+                      })
+                    } catch (err) {
+                      console.log(err)
+                    }
+                  })
+
+                const images : string[] = []
+
+                for (let i = 0; i < req.files.length; i++) { images.push(String(req.files[i].filename)) }
+
+                for (const image of images) {
+                  await trx('product_images')
+                    .insert({
+                      product_id: id,
+                      link: `uploads/${image}`
+                    })
+                }
+
+                await trx('products')
                   .update({
                     name,
                     price,
@@ -115,9 +180,10 @@ class ProductsController {
                     category_id: category
                   })
                   .where('id', id)
-                  .then(() => {
-                    return res.sendStatus(200)
-                  })
+
+                await trx.commit()
+
+                return res.sendStatus(200)
               }
             })
             .catch(Error)
@@ -142,9 +208,30 @@ class ProductsController {
           await Utils.isLoggedIn(email, String(auth))
             .then(async isLoggedIn => {
               if (isLoggedIn) {
-                await db('products')
+                const trx = await db.transaction()
+
+                const productImages : ImageProps[] = await trx('product_images')
+                  .select('*')
+                  .where({ product_id: id })
+
+                await trx('product_images')
+                  .where({ product_id: id })
+                  .delete()
+                  .then(() => {
+                    try {
+                      productImages.forEach(product => {
+                        fs.unlinkSync(path.resolve(__dirname, '..', '..', String(product.link)))
+                      })
+                    } catch (err) {
+                      console.log(err)
+                    }
+                  })
+
+                await trx('products')
                   .where('id', id)
                   .delete()
+
+                await trx.commit()
 
                 return res.sendStatus(200)
               }
