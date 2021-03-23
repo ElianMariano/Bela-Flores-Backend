@@ -42,28 +42,39 @@ class UserController {
   public async create (req: Request, res: Response) {
     const { name, phone, email, password } = req.body
 
-    const RamdomStr = crypto.randomBytes(16).toString('hex')
+    const user = await db('users')
+      .select('email')
+      .where({ email })
 
-    const hash = await argon2.hash(password)
-      .catch(Error)
+    if (user.length === 0 || user === undefined) {
+      const RamdomStr = crypto.randomBytes(16).toString('hex')
 
-    await db('users').insert({
-      name,
-      phone,
-      email,
-      password: hash,
-      is_logged_in: true,
-      auth: RamdomStr,
-      is_admin: false
-    })
+      const hash = await argon2.hash(password)
+        .catch(Error)
 
-    const [{ id }] = await db('users').select('id').where({ email, auth: RamdomStr })
+      await db('users').insert({
+        name,
+        phone,
+        email,
+        password: hash,
+        is_logged_in: true,
+        auth: RamdomStr,
+        is_admin: false
+      })
 
-    return res
-      .header('auth', RamdomStr)
+      const [{ id }] = await db('users').select('id').where({ email, auth: RamdomStr })
+
+      return res
+        .header('auth', RamdomStr)
+        .json({
+          id,
+          name
+        })
+    }
+
+    return res.status(401)
       .json({
-        id,
-        name
+        error: 'email already exists!'
       })
   }
 
@@ -71,26 +82,37 @@ class UserController {
     const { id, name, phone, email } = req.body
     const { auth } = req.headers
 
-    await Utils.isLoggedIn(email, String(auth))
-      .then(async result => {
-        if (result) {
-          await db('users').update({
-            name,
-            phone,
-            email
-          }).where({
-            id,
-            auth
+    const user = await db('users')
+      .select('email')
+      .where({ email })
+
+    if (user.length === 0 || user === undefined) {
+      await Utils.isLoggedIn(email, String(auth))
+        .then(async result => {
+          if (result) {
+            await db('users').update({
+              name,
+              phone,
+              email
+            }).where({
+              id,
+              auth
+            })
+
+            return res.sendStatus(200)
+          }
+
+          return res.status(401).json({
+            error: 'Unauthorized access!'
           })
-
-          return res.sendStatus(200)
-        }
-
-        return res.status(401).json({
-          error: 'Unauthorized access!'
         })
+        .catch(Error)
+    }
+
+    return res.status(401)
+      .json({
+        error: 'email already exists!'
       })
-      .catch(Error)
   }
 
   public async delete (req: Request, res: Response) {
@@ -117,6 +139,16 @@ class UserController {
 
   public async login (req: Request, res: Response) {
     const { email, password } = req.body
+
+    const user = await db('users')
+      .select('email')
+      .where({ email })
+
+    if (user.length === 0 || user === undefined) {
+      return res.status(400).json({
+        error: 'User does not exists!'
+      })
+    }
 
     const RamdomStr = crypto.randomBytes(16).toString('hex')
 
@@ -161,6 +193,16 @@ class UserController {
   public async logout (req: Request, res: Response) {
     const { id, email } = req.body
     const { auth } = req.headers
+
+    const user = await db('users')
+      .select('email')
+      .where({ email })
+
+    if (user.length === 0 || user === undefined) {
+      return res.status(400).json({
+        error: 'User does not exists!'
+      })
+    }
 
     await Utils.isLoggedIn(email, String(auth))
       .then(async result => {
