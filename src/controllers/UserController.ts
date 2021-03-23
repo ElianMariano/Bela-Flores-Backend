@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import crypto from 'crypto'
 import Utils from './utils'
 import db from '../database/connection'
+import argon2 from 'argon2'
 
 class UserController {
   public async profile (req: Request, res: Response) {
@@ -43,11 +44,14 @@ class UserController {
 
     const RamdomStr = crypto.randomBytes(16).toString('hex')
 
+    const hash = await argon2.hash(password)
+      .catch(Error)
+
     await db('users').insert({
       name,
       phone,
       email,
-      password,
+      password: hash,
       is_logged_in: true,
       auth: RamdomStr,
       is_admin: false
@@ -116,31 +120,42 @@ class UserController {
 
     const RamdomStr = crypto.randomBytes(16).toString('hex')
 
-    await db('users').where({
-      email,
-      password
-    }).update({ auth: RamdomStr, is_logged_in: true })
+    const [{ password: hash }] = await db('users')
+      .select(['password'])
+      .where({ email })
 
-    let id, name
+    argon2.verify(hash, password).then(async correct => {
+      if (correct) {
+        await db('users').where({
+          email
+        }).update({ auth: RamdomStr, is_logged_in: true })
 
-    try {
-      [{ id, name }] = await db('users')
-        .select('id', 'name')
-        .where({
-          email,
-          password,
-          auth: RamdomStr
+        let id, name
+
+        try {
+          [{ id, name }] = await db('users')
+            .select('id', 'name')
+            .where({
+              email,
+              password: hash,
+              auth: RamdomStr
+            })
+        } catch (err) {
+          console.log(err)
+        }
+
+        return res
+          .header('auth', RamdomStr)
+          .json({
+            id,
+            name
+          })
+      } else {
+        return res.status(400).json({
+          error: 'Username or/and password are not valid!'
         })
-    } catch (err) {
-      console.log(err)
-    }
-
-    return res
-      .header('auth', RamdomStr)
-      .json({
-        id,
-        name
-      })
+      }
+    }).catch(Error)
   }
 
   public async logout (req: Request, res: Response) {
