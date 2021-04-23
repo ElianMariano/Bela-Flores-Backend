@@ -5,29 +5,67 @@ import Utils from './utils'
 class CategoryController {
   public async profile (req: Request, res: Response) {
     const { category } = req.params
-    const { with_products: withProducts = false } = req.params
+    const {
+      with_products: withProducts = false,
+      count = 1,
+      page = 1
+    } = req.query
 
     const [data] = await db('category')
       .select('*')
       .where('category', category)
-
-    // Request products
 
     if (data === {} || data === undefined) {
       res.status(404)
         .send({
           error: 'Category not found!'
         })
-    } else { return res.status(200).json(data) }
+    }
+
+    if (!withProducts) { return res.status(200).json(data) }
+
+    // Request products
+    const products = await db('products')
+      .select('*')
+      .where('category_id', category)
+      .orderBy('id', 'desc')
+      .limit(Number(count))
+      .offset((Number(page) - 1) * Number(count))
+
+    return res.status(200).json({ ...data, products })
   }
 
   public async index (req: Request, res: Response) {
-    const { width_products: withProducts = false } = req.params
+    const {
+      with_products: withProducts = false,
+      count = 1,
+      page = 1
+    } = req.query
 
-    const data = await db('category')
+    const categories = await db('category')
       .select('*')
 
-    return res.status(200).json(data)
+    if (withProducts) {
+      const promises = categories.map(async (element) => {
+        const products = await db('products')
+          .select('*')
+          .where('category_id', element.category)
+          .orderBy('id', 'desc')
+          .limit(Number(count))
+          .offset((Number(page) - 1) * Number(count))
+
+        const category = element
+        category.products = products
+
+        return category
+      })
+
+      const data = await Promise.all(promises)
+
+      return res.status(200).json(data)
+    }
+
+    return res.status(200).json(categories)
   }
 
   public async create (req: Request, res: Response) {
