@@ -26,13 +26,26 @@ class CategoryController {
 
     // Request products
     const products = await db('products')
-      .select('*')
+      .select(['id', 'name', 'price', 'description', 'splited_price', 'division_quantity'])
       .where('category_id', category)
       .orderBy('id', 'desc')
       .limit(Number(count))
       .offset((Number(page) - 1) * Number(count))
 
-    return res.status(200).json({ ...data, products })
+    const productsImg = products.map(async element => {
+      const images = await db('product_images')
+        .select('link')
+        .where('product_id', element.id)
+
+      const product = element
+      product.images = images
+
+      return product
+    })
+
+    const productImages = await Promise.all(productsImg)
+
+    return res.status(200).json({ ...data, productImages })
   }
 
   public async index (req: Request, res: Response) {
@@ -48,14 +61,27 @@ class CategoryController {
     if (withProducts) {
       const promises = categories.map(async (element) => {
         const products = await db('products')
-          .select('*')
+          .select(['id', 'name', 'price', 'description', 'splited_price', 'division_quantity'])
           .where('category_id', element.category)
           .orderBy('id', 'desc')
           .limit(Number(count))
           .offset((Number(page) - 1) * Number(count))
 
+        const productsImg = products.map(async element => {
+          const images = await db('product_images')
+            .select('link')
+            .where('product_id', element.id)
+
+          const product = element
+          product.images = images
+
+          return product
+        })
+
+        const productsImage = await Promise.all(productsImg)
+
         const category = element
-        category.products = products
+        category.products = productsImage
 
         return category
       })
