@@ -28,19 +28,22 @@ class UserController {
   }
 
   public async index (req: Request, res: Response) {
-    const { page = 1 } = req.query
+    const {
+      page = 1,
+      count = 1
+    } = req.query
 
     const users = await db('users')
       .select(['name', 'email', 'phone'])
       .orderBy('id')
-      .limit(5)
-      .offset((Number(page) - 1) * 5)
+      .limit(Number(count))
+      .offset((Number(page) - 1) * Number(count))
 
     return res.json(users)
   }
 
   public async create (req: Request, res: Response) {
-    const { name, phone, email, password } = req.body
+    const { name, phone, email, cpf, password } = req.body
 
     const user = await db('users')
       .select('email')
@@ -56,11 +59,12 @@ class UserController {
         name,
         phone,
         email,
+        cpf,
         password: hash,
         is_logged_in: true,
         auth: RamdomStr,
         is_admin: false
-      })
+      }).catch(Error)
 
       const [{ id }] = await db('users').select('id').where({ email, auth: RamdomStr })
 

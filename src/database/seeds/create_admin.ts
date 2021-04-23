@@ -9,6 +9,7 @@ export async function seed (knex: Knex) : Promise<void> {
     name: 'admin',
     phone: '(28) 99999-9999',
     email: 'email@gmail.com',
+    cpf: '11111111111',
     is_logged_in: false,
     auth: '',
     is_admin: true,
