@@ -16,7 +16,9 @@ class App {
 
     private midddlewares (): void {
       this.express.use(express.json())
-      this.express.use(cors())
+      this.express.use(cors({
+        exposedHeaders: ['*']
+      }))
       this.express.use('/uploads', express.static(path.resolve(__dirname, '..', 'uploads')))
     }
 
