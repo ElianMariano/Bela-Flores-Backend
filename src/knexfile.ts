@@ -4,26 +4,26 @@ const config = {
   test: {
     client: 'sqlite3',
     connection: {
-      filename: path.resolve(__dirname, 'src', 'database', 'test.sqlite')
+      filename: path.resolve(__dirname, 'database', 'test.sqlite')
     },
     migrations: {
-      directory: path.resolve(__dirname, 'src', 'database', 'migrations')
+      directory: path.resolve(__dirname, 'database', 'migrations')
     },
     seeds: {
-      directory: path.resolve(__dirname, 'src', 'database', 'seeds')
+      directory: path.resolve(__dirname, 'database', 'seeds')
     },
     useNullAsDefault: true
   },
   development: {
     client: 'sqlite3',
     connection: {
-      filename: path.resolve(__dirname, 'src', 'database', 'database.sqlite')
+      filename: path.resolve(__dirname, 'database', 'database.sqlite')
     },
     migrations: {
-      directory: path.resolve(__dirname, 'src', 'database', 'migrations')
+      directory: path.resolve(__dirname, 'database', 'migrations')
     },
     seeds: {
-      directory: path.resolve(__dirname, 'src', 'database', 'seeds')
+      directory: path.resolve(__dirname, 'database', 'seeds')
     },
     useNullAsDefault: true
   },
@@ -47,7 +47,7 @@ const config = {
   production: {
     client: 'postgresql',
     connection: {
-      database: 'my_db',
+      database: 'belaflores_bd',
       user: 'username',
       password: 'password'
     },

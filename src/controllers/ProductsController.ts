@@ -12,7 +12,7 @@ interface ImageProps {
 }
 // TODO Test the update route from this file
 class ProductsController {
-  public async index (req: Request, res: Response) {
+  public async profile (req: Request, res: Response) {
     const { id } = req.params
 
     const [product] = await db('products')
@@ -31,6 +31,33 @@ class ProductsController {
       ...product,
       images: imageSource
     })
+  }
+
+  public async index (req: Request, res: Response) {
+    const { with_images: withImages } = req.query
+
+    const products = await db('products')
+      .select('*')
+      .orderBy('id')
+
+    if (withImages === undefined || !withImages) { return res.json(products) }
+
+    let productImages = products.map(async product => {
+      const images : ImageProps[] = await db('product_images')
+        .select(['link'])
+        .where('product_id', product.id)
+
+      const newProduct = {
+        ...product,
+        images
+      }
+
+      return newProduct
+    })
+
+    productImages = await Promise.all(productImages)
+
+    return res.json(productImages)
   }
 
   public async create (req: Request, res: Response) {

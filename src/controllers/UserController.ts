@@ -72,7 +72,8 @@ class UserController {
         .header('auth', RamdomStr)
         .json({
           id,
-          name
+          name,
+          is_admin: false
         })
     }
 
@@ -166,11 +167,11 @@ class UserController {
           email
         }).update({ auth: RamdomStr, is_logged_in: true })
 
-        let id, name
+        let id, name, isAdmin
 
         try {
-          [{ id, name }] = await db('users')
-            .select('id', 'name')
+          [{ id, name, is_admin: isAdmin }] = await db('users')
+            .select('id', 'name', 'is_admin', 'email')
             .where({
               email,
               password: hash,
@@ -184,7 +185,9 @@ class UserController {
           .header('auth', RamdomStr)
           .json({
             id,
-            name
+            name,
+            email,
+            admin: isAdmin
           })
       } else {
         return res.status(400).json({
