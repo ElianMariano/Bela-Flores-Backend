@@ -1,18 +1,63 @@
 import { Request, Response } from 'express'
+import path from 'path'
+import fs from 'fs'
 import Utils from './utils'
 import db from '../database/connection'
 
+interface ImageProps {
+  id: number;
+  // eslint-disable-next-line camelcase
+  product_id: number;
+  link: string;
+}
+// TODO Test the update route from this file
 class ProductsController {
-  public async index (req: Request, res: Response) {
+  public async profile (req: Request, res: Response) {
     const { id } = req.params
 
-    await db('products')
+    const [product] = await db('products')
       .select('*')
       .where('id', id)
-      .then(result => {
-        const [product] = result
-        return res.json(product)
-      })
+
+    const images : ImageProps[] = await db('product_images')
+      .select('*')
+      .where('product_id', id)
+
+    const imageSource = images.map(image => {
+      return image.link
+    })
+
+    return res.json({
+      ...product,
+      images: imageSource
+    })
+  }
+
+  public async index (req: Request, res: Response) {
+    const { with_images: withImages } = req.query
+
+    const products = await db('products')
+      .select('*')
+      .orderBy('id')
+
+    if (withImages === undefined || !withImages) { return res.json(products) }
+
+    let productImages = products.map(async product => {
+      const images : ImageProps[] = await db('product_images')
+        .select(['link'])
+        .where('product_id', product.id)
+
+      const newProduct = {
+        ...product,
+        images
+      }
+
+      return newProduct
+    })
+
+    productImages = await Promise.all(productImages)
+
+    return res.json(productImages)
   }
 
   public async create (req: Request, res: Response) {
@@ -22,27 +67,24 @@ class ProductsController {
       price,
       description,
       splited_price: splitedPrice,
-      quantity,
+      division_quantity: divisionQuantity,
       category
     } = req.body
     const { auth } = req.headers
 
-    try {
-      await db('category')
-        .select('category')
-        .where({ category })
-        .then(result => {
-          if (result.length === 0) {
-            return res
-              .status(404)
-              .json({
-                error: 'Category does not exist!'
-              })
-          }
-        })
-    } catch (err) {
-      console.log(err)
-    }
+    await db('category')
+      .select('category')
+      .where({ category })
+      .then(result => {
+        if (result.length === 0) {
+          return res
+            .status(404)
+            .json({
+              error: 'Category does not exist!'
+            })
+        }
+      })
+      .catch(Error)
 
     await Utils.isAdmin(email)
       .then(async isAdmin => {
@@ -50,19 +92,33 @@ class ProductsController {
           await Utils.isLoggedIn(email, String(auth))
             .then(async isLoggedIn => {
               if (isLoggedIn) {
-                await db('products')
+                const trx = await db.transaction()
+
+                const [id] = await trx('products')
                   .insert({
                     name,
                     price,
                     description,
                     splited_price: splitedPrice,
-                    quantity,
+                    division_quantity: divisionQuantity,
                     category_id: category
                   })
-                  .then(result => {
-                    const [id] = result
-                    return res.status(200).json({ id })
-                  })
+
+                const images : string[] = []
+
+                for (let i = 0; i < req.files.length; i++) { images.push(String(req.files[i].filename)) }
+
+                for (const image of images) {
+                  await trx('product_images')
+                    .insert({
+                      product_id: id,
+                      link: `uploads/${image}`
+                    })
+                }
+
+                await trx.commit()
+
+                return res.status(200).json({ id })
               }
             })
             .catch(Error)
@@ -85,27 +141,24 @@ class ProductsController {
       price,
       description,
       splited_price: splitedPrice,
-      quantity,
+      division_quantity: divisionQuantity,
       category
     } = req.body
     const { auth } = req.headers
 
-    try {
-      await db('category')
-        .select('category')
-        .where({ category })
-        .then(result => {
-          if (result.length === 0) {
-            return res
-              .status(404)
-              .json({
-                error: 'Category does not exist!'
-              })
-          }
-        })
-    } catch (err) {
-      console.log(err)
-    }
+    await db('category')
+      .select('category')
+      .where({ category })
+      .then(result => {
+        if (result.length === 0) {
+          return res
+            .status(404)
+            .json({
+              error: 'Category does not exist!'
+            })
+        }
+      })
+      .catch(Error)
 
     await Utils.isAdmin(email)
       .then(async isAdmin => {
@@ -113,19 +166,51 @@ class ProductsController {
           await Utils.isLoggedIn(email, String(auth))
             .then(async isLoggedIn => {
               if (isLoggedIn) {
-                await db('products')
+                const trx = await db.transaction()
+
+                const productImages : ImageProps[] = await trx('product_images')
+                  .select('*')
+                  .where({ product_id: id })
+
+                await trx('product_images')
+                  .where({ product_id: id })
+                  .delete()
+                  .then(() => {
+                    try {
+                      productImages.forEach(product => {
+                        fs.unlinkSync(path.resolve(__dirname, '..', '..', String(product.link)))
+                      })
+                    } catch (err) {
+                      console.log(err)
+                    }
+                  })
+
+                const images : string[] = []
+
+                for (let i = 0; i < req.files.length; i++) { images.push(String(req.files[i].filename)) }
+
+                for (const image of images) {
+                  await trx('product_images')
+                    .insert({
+                      product_id: id,
+                      link: `uploads/${image}`
+                    })
+                }
+
+                await trx('products')
                   .update({
                     name,
                     price,
                     description,
                     splited_price: splitedPrice,
-                    quantity,
+                    division_quantity: divisionQuantity,
                     category_id: category
                   })
                   .where('id', id)
-                  .then(() => {
-                    return res.sendStatus(200)
-                  })
+
+                await trx.commit()
+
+                return res.sendStatus(200)
               }
             })
             .catch(Error)
@@ -150,9 +235,30 @@ class ProductsController {
           await Utils.isLoggedIn(email, String(auth))
             .then(async isLoggedIn => {
               if (isLoggedIn) {
-                await db('products')
+                const trx = await db.transaction()
+
+                const productImages : ImageProps[] = await trx('product_images')
+                  .select('*')
+                  .where({ product_id: id })
+
+                await trx('product_images')
+                  .where({ product_id: id })
+                  .delete()
+                  .then(() => {
+                    try {
+                      productImages.forEach(product => {
+                        fs.unlinkSync(path.resolve(__dirname, '..', '..', String(product.link)))
+                      })
+                    } catch (err) {
+                      console.log(err)
+                    }
+                  })
+
+                await trx('products')
                   .where('id', id)
                   .delete()
+
+                await trx.commit()
 
                 return res.sendStatus(200)
               }

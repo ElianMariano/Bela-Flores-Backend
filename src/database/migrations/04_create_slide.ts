@@ -1,12 +1,12 @@
 import Knex from 'knex'
 
+// TODO Do a refactor to this file
 export async function up (knex: Knex) : Promise<void> {
-  return knex.schema.createTable('images', table => {
+  return knex.schema.createTable('slide', table => {
     table.increments('id').primary()
     table.string('link').notNullable()
     table.string('description').notNullable()
-    table.boolean('is_slide').notNullable()
-    table.integer('user_id').references('id').inTable('products')
+    table.integer('product_id').references('id').inTable('products')
   })
 }
 

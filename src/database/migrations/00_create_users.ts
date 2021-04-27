@@ -6,6 +6,7 @@ export async function up (knex: Knex) {
     table.string('name').notNullable()
     table.string('phone').notNullable()
     table.string('email').unique().notNullable()
+    table.string('cpf', 15).unique().notNullable()
     table.boolean('is_logged_in').notNullable()
     table.string('auth')
     table.boolean('is_admin').notNullable()

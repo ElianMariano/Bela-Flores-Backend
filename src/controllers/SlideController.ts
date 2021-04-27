@@ -6,8 +6,8 @@ import db from '../database/connection'
 
 class SlideController {
   public async index (req: Request, res: Response) {
-    await db('images')
-      .select(['id', 'link', 'description'])
+    await db('slide')
+      .select('*')
       .orderBy('id')
       .then(images => {
         return res.json(images)
@@ -17,7 +17,8 @@ class SlideController {
   public async create (req: Request, res: Response) {
     const {
       email,
-      description
+      description,
+      product_id: productId
     } = req.body
     const { auth } = req.headers
 
@@ -30,10 +31,10 @@ class SlideController {
                 const slide = {
                   link: `uploads/${req.file.filename}`,
                   description,
-                  is_slide: true
+                  product_id: productId
                 }
 
-                const ids = await db('images').insert(slide)
+                const ids = await db('slide').insert(slide)
 
                 return res.send({ id: ids[0] })
               }
@@ -50,7 +51,7 @@ class SlideController {
   }
 
   public async update (req: Request, res: Response) {
-    const { email, id, description } = req.body
+    const { email, id, description, product_id: productId } = req.body
     const { auth } = req.headers
 
     await Utils.isLoggedIn(email, String(auth))
@@ -59,7 +60,7 @@ class SlideController {
           await Utils.isAdmin(email)
             .then(async isAdmin => {
               if (isAdmin) {
-                await db('images')
+                await db('slide')
                   .select('link')
                   .where({ id })
                   .then(async data => {
@@ -73,20 +74,24 @@ class SlideController {
 
                     const trx = await db.transaction()
 
-                    await trx('images')
+                    await trx('slide')
                       .where({ id })
                       .delete()
                       .then(() => {
-                        fs.unlinkSync(path.resolve(__dirname, '..', '..', data[0].link))
+                        try {
+                          fs.unlinkSync(path.resolve(__dirname, '..', '..', data[0].link))
+                        } catch (err) {
+                          console.log(err)
+                        }
                       })
 
                     const slide = {
                       link: `uploads/${req.file.filename}`,
                       description,
-                      is_slide: true
+                      product_id: productId
                     }
 
-                    const ids = await trx('images')
+                    const ids = await trx('slide')
                       .insert(slide)
 
                     await trx.commit()
@@ -122,7 +127,7 @@ class SlideController {
           await Utils.isAdmin(email)
             .then(async isAdmin => {
               if (isAdmin) {
-                await db('images')
+                await db('slide')
                   .select('link')
                   .where({ id })
                   .then(async data => {
@@ -134,11 +139,15 @@ class SlideController {
                         })
                     }
 
-                    await db('images')
+                    await db('slide')
                       .where({ id })
                       .delete()
                       .then(() => {
-                        fs.unlinkSync(path.resolve(__dirname, '..', '..', data[0].link))
+                        try {
+                          fs.unlinkSync(path.resolve(__dirname, '..', '..', data[0].link))
+                        } catch (err) {
+                          console.log(err)
+                        }
                       })
 
                     return res.sendStatus(200)

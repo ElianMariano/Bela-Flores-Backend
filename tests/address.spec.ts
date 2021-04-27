@@ -113,7 +113,8 @@ describe('address', () => {
         street: 'street',
         number: 10,
         CEP: '00000000',
-        nickname
+        nickname,
+        id: response.body.id
       })
       .set({ auth })
 
@@ -153,7 +154,7 @@ describe('address', () => {
       .delete('/address')
       .send({
         email,
-        nickname
+        id: response.body.id
       })
       .set({ auth })
 
