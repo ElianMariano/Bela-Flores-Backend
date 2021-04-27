@@ -46,7 +46,13 @@ const config = {
 
   production: {
     client: 'pg',
-    connection: process.env.DATABASE_URL
+    connection: process.env.DATABASE_URL,
+    migrations: {
+      directory: path.resolve(__dirname, 'database', 'migrations')
+    },
+    seeds: {
+      directory: path.resolve(__dirname, 'database', 'seeds')
+    }
   }
 }
 
