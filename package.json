@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "node dist/server.js",
+    "start": "cross-env STAGE=production node dist/server.js",
     "postinstall": "yarn run build && yarn run migrate && yarn run seed",
     "migrate": "knex --knexfile=./dist/knexfile.js migrate:latest",
     "seed": "knex --knexfile=./dist/knexfile.js seed:run",
