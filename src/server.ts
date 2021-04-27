@@ -1,7 +1,4 @@
 import app from './app'
 
-if (process.env.STAGE === 'production') {
-  app.listen(process.env.PORT)
-} else {
-  app.listen(3333)
-}
+console.log(process.env.PORT)
+app.listen(process.env.PORT)
