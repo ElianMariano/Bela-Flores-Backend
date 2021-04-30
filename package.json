@@ -8,7 +8,7 @@
     "postinstall": "yarn run build && yarn run migrate && yarn run seed",
     "migrate": "knex --knexfile=./dist/knexfile.js migrate:latest",
     "seed": "knex --knexfile=./dist/knexfile.js seed:run",
-    "dev": "cross-env PORT=3333 nodemon src/server.ts",
+    "dev": "cross-env PORT=3333, NODE_ENV=development nodemon src/server.ts",
     "build": "sucrase ./src -d ./dist --transforms typescript,imports",
     "test": "cross-env NODE_ENV=test jest --runInBand ",
     "dev-migrate": "knex --knexfile=./src/knexfile.ts migrate:latest",

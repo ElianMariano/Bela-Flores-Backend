@@ -1,4 +1,7 @@
 import app from './app'
 
-console.log(process.env.PORT)
-app.listen(process.env.PORT)
+if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+  app.listen(process.env.PORT)
+} else {
+  app.listen(3333)
+}
