@@ -45,18 +45,18 @@ const config = {
   },
 
   production: {
-    client: 'postgresql',
+    client: 'pg',
     connection: {
-      database: 'belaflores_bd',
-      user: 'username',
-      password: 'password'
-    },
-    pool: {
-      min: 2,
-      max: 10
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false
+      }
     },
     migrations: {
-      tableName: 'knex_migrations'
+      directory: path.resolve(__dirname, 'database', 'migrations')
+    },
+    seeds: {
+      directory: path.resolve(__dirname, 'database', 'seeds')
     }
   }
 }
